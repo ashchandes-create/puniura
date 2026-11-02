@@ -80,12 +80,37 @@
     return '今日のオーラは' + aura.name + '。おすすめは「' + lucky + '」。';
   }
 
+  function copyAppUrl(url, status) {
+    function showUrl() { status.textContent = 'リンク：' + url; }
+    if (!navigator.clipboard) {
+      showUrl();
+      return;
+    }
+    navigator.clipboard.writeText(url).then(function () {
+      status.textContent = 'リンクをコピーしました。';
+    }).catch(showUrl);
+  }
+
+  // URLだけを渡すと、AirDropの相手側でそのままSafariが開く
+  function shareApp(status) {
+    var url = location.origin + location.pathname;
+    status.textContent = '';
+    if (!navigator.share) {
+      copyAppUrl(url, status);
+      return;
+    }
+    navigator.share({ url: url }).catch(function (e) {
+      if (e.name !== 'AbortError') copyAppUrl(url, status);
+    });
+  }
+
   function homeScreen() {
     var history = loadHistory();
     var latest = history[0];
     var input = el('input', { type: 'file', accept: 'image/*', hidden: 'hidden' });
     var nameField = el('input', { type: 'text', id: 'pet-name', maxlength: '12', placeholder: 'こむぎ', autocomplete: 'off' });
     var error = el('p', { class: 'error', role: 'alert' });
+    var shareStatus = el('p', { class: 'hint', role: 'status' });
     nameField.value = state.name;
 
     function speciesButton(value, label) {
@@ -127,6 +152,8 @@
           onclick: function () { state = Object.assign(newState(), item, { photo: null }); resultScreen(false); }
         });
       })) : null,
+      el('button', { class: 'ghost', text: 'このアプリをAirDropで送る', onclick: function () { shareApp(shareStatus); } }),
+      shareStatus,
       el('p', { class: 'notice', text: 'エンタメ占いです。健康の判定はしません。写真は端末の外に送られません。' })
     ]);
   }
@@ -454,7 +481,7 @@
     show([
       el('img', { class: 'result-image', src: card.toDataURL('image/png'), alt: Content.types[state.typeKey].name + 'の占い結果カード' }),
       el('div', { class: 'row' }, [
-        el('button', { text: 'シェア', onclick: function () { shareCard(card, error); } }),
+        el('button', { text: 'シェア・AirDrop', onclick: function () { shareCard(card, error); } }),
         el('button', { class: 'ghost', text: '画像で見る', onclick: function () { imageOverlay(card.toDataURL('image/png')); } })
       ]),
       error,
