@@ -465,8 +465,12 @@
 
   window.PuniApp = { preparePhoto: preparePhoto, getState: function () { return state; } };
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('オフライン機能を有効にできませんでした', e); });
-  }
   homeScreen();
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.register('sw.js').catch(function (e) { console.warn('オフライン機能を有効にできませんでした', e); });
+    } catch (e) {
+      console.warn('オフライン機能を使えない環境です', e);
+    }
+  }
 })();
